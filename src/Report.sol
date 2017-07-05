@@ -17,45 +17,85 @@ contract Mortal {
     }
 }
 
+
 contract Report {
 
     uint id;
     uint timeStamp;
-    string name;
     address reporter;
     address[] confirmations;
 
-    function Report() {
-        id = msg.gas;
+    function Report(address sender) {
+        id = now + msg.gas;
         timeStamp = now;
-        name = "first report";
-        reporter = msg.sender;
+        reporter = sender;
     }
 
-    function addConfirmation() {
-        if(msg.sender != reporter) {
-            confirmations.push(msg.sender);
+    function addConfirmation(address sender) public{
+
+
+        bool alreadyConfirmed = false;
+        for (uint256 i; i < confirmations.length; i++) {
+            if (confirmations[i] == sender) {
+                alreadyConfirmed = true;
+                break;
+            }
+        }
+
+
+        if (!alreadyConfirmed && sender != reporter) {
+            confirmations.push(sender);
         }
     }
 
-    function getName() public returns (string) {
-        return name;
+    function getConfirmationCount() public constant returns (uint256){
+        return confirmations.length;
+    }
+
+    function getId() public constant returns (uint) {
+        return id;
+    }
+
+    function getReporter() public constant returns (address) {
+        return reporter;
     }
 }
 
 
 contract Repairchain is Mortal {
-    mapping(address => Report) public reports;
+    mapping (string => Report[]) reports;
 
     function Repairchain () {
-        reports[msg.sender] = new Report();
+
     }
 
-    function getName() returns (string){
-        Report myReport = reports[msg.sender];
-        string myName = myReport.getName();
-        return myName;
+    function addReportToCity(string city) {
+        Report newReport = new Report(msg.sender);
+        reports[city].push(newReport);
     }
+
+    function getReporter(string city, uint id) constant returns (address) {
+        return getReport(city, id).getReporter();
+    }
+
+    function getReport(string city, uint id) public constant returns (Report) {
+        //iterate over Reports list and retorn Report with id == id
+        return reports[city][id];
+    }
+
+    function addConfirmationToReport(string city, uint id) public {
+        getReport(city, id).addConfirmation(msg.sender);
+    }
+
+    function getConfirmationCount (string city, uint id) public constant returns (uint256) {
+        return getReport(city, id).getConfirmationCount();
+    }
+
+    //function getReports(string city) constant returns (mapping(string => Report)){
+    //    Report myReports = reports[city];
+    //    address myName = myReport.getReporter();
+     //   return myReports;
+    //}
 
 
 }
