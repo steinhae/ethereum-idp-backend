@@ -1,5 +1,4 @@
 pragma solidity ^0.4.11;
-
 contract Mortal {
     /* Define variable owner of the type address*/
     address owner;
@@ -24,15 +23,19 @@ contract Report {
     uint timeStamp;
     address reporter;
     address[] confirmations;
+    bytes32 pictureHash1;
+    bytes32 pictureHash2;
 
-    function Report(address sender) {
+
+    function Report(address sender, bytes32 firstPictureHash, bytes32 secondPictureHash) {
         id = now + msg.gas;
         timeStamp = now;
         reporter = sender;
+        pictureHash1 = firstPictureHash;
+        pictureHash2 = secondPictureHash;
     }
 
     function addConfirmation(address sender) public{
-
 
         bool alreadyConfirmed = false;
         for (uint256 i; i < confirmations.length; i++) {
@@ -41,7 +44,6 @@ contract Report {
                 break;
             }
         }
-
 
         if (!alreadyConfirmed && sender != reporter) {
             confirmations.push(sender);
@@ -59,6 +61,14 @@ contract Report {
     function getReporter() public constant returns (address) {
         return reporter;
     }
+
+    function getPictureHash1() public constant returns (bytes32) {
+        return pictureHash1;
+    }
+
+    function getPictureHash2() public constant returns (bytes32) {
+        return pictureHash2;
+    }
 }
 
 
@@ -69,8 +79,41 @@ contract Repairchain is Mortal {
 
     }
 
-    function addReportToCity(string city) {
-        Report newReport = new Report(msg.sender);
+    function firstStringToBytes32(string memory source) returns (bytes32 result) {
+        assembly {
+            result := mload(add(source, 32))
+        }
+    }
+
+    function secondStringToBytes32(string memory source) returns (bytes32 result) {
+        assembly {
+            result := mload(add(source, 64))
+        }
+    }
+
+    function bytes32ToString(bytes32 x) constant returns (string) {
+        bytes memory bytesString = new bytes(32);
+        uint charCount = 0;
+        for (uint j = 0; j < 32; j++) {
+            byte char = byte(bytes32(uint(x) * 2 ** (8 * j)));
+            if (char != 0) {
+                bytesString[charCount] = char;
+                charCount++;
+            }
+        }
+        bytes memory bytesStringTrimmed = new bytes(charCount);
+        for (j = 0; j < charCount; j++) {
+            bytesStringTrimmed[j] = bytesString[j];
+        }
+        return string(bytesStringTrimmed);
+    }
+
+
+    function addReportToCity(string city, string pictureHash) {
+
+        bytes32 pictureHashAsBytes32first = firstStringToBytes32(pictureHash);
+        bytes32 pictureHashAsBytes32second = secondStringToBytes32(pictureHash);
+        Report newReport = new Report(msg.sender, pictureHashAsBytes32first, pictureHashAsBytes32second);
         reports[city].push(newReport);
     }
 
@@ -91,11 +134,16 @@ contract Repairchain is Mortal {
         return getReport(city, id).getConfirmationCount();
     }
 
-    //function getReports(string city) constant returns (mapping(string => Report)){
-    //    Report myReports = reports[city];
-    //    address myName = myReport.getReporter();
-     //   return myReports;
-    //}
+    function getPictureHash1 (string city, uint id) public constant returns (string) {
+        bytes32 hash1 = getReport(city, id).getPictureHash1();
+        return bytes32ToString(hash1);
+    }
+
+    function getPictureHash2 (string city, uint id) public constant returns (string) {
+        bytes32 hash2 = getReport(city, id).getPictureHash2();
+        return bytes32ToString(hash2);
+    }
+
 
 
 }
