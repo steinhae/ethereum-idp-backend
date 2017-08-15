@@ -25,6 +25,7 @@ contract Report {
     address[] confirmations;
     bytes32 pictureHash1;
     bytes32 pictureHash2;
+    bool enoughConfirmations;
 
 
     function Report(address sender, bytes32 firstPictureHash, bytes32 secondPictureHash) {
@@ -33,9 +34,10 @@ contract Report {
         reporter = sender;
         pictureHash1 = firstPictureHash;
         pictureHash2 = secondPictureHash;
+        enoughConfirmations = false;
     }
 
-    function addConfirmation(address sender) public{
+    function addConfirmation(address sender) public returns (bool){
 
         bool alreadyConfirmed = false;
         for (uint256 i; i < confirmations.length; i++) {
@@ -45,9 +47,20 @@ contract Report {
             }
         }
 
-        if (!alreadyConfirmed && sender != reporter) {
+        if (!alreadyConfirmed && sender != reporter && confirmations.length < 5) {
             confirmations.push(sender);
+            /* hardcoded limit of confirmations is 5*/
+            if(confirmations.length == 5){
+                enoughConfirmations = true;
+            }
+            return true;
+        } else {
+            return false;
         }
+    }
+
+    function getEnoughConfirmations() public constant returns (bool){
+        return enoughConfirmations;
     }
 
     function getConfirmationCount() public constant returns (uint256){
@@ -126,13 +139,19 @@ contract Repairchain is Mortal {
         return reports[city][id];
     }
 
-    function addConfirmationToReport(string city, uint id) public {
-        getReport(city, id).addConfirmation(msg.sender);
+    //returns true if the confirmation was added and false if already enough confirmations exist
+    function addConfirmationToReport(string city, uint id) public returns (bool){
+        return getReport(city, id).addConfirmation(msg.sender);
     }
 
     function getConfirmationCount (string city, uint id) public constant returns (uint256) {
         return getReport(city, id).getConfirmationCount();
     }
+
+    function getEnoughConfirmations(string city, uint id) public constant returns (bool){
+        return getReport(city, id).getEnoughConfirmations();
+    }
+
 
     function getPictureHash1 (string city, uint id) public constant returns (string) {
         bytes32 hash1 = getReport(city, id).getPictureHash1();
