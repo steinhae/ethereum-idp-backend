@@ -50,7 +50,7 @@ contract Report {
     }
 
     function addConfirmation(address sender) public{
-        if(sender != reporter && confirmations.length < 5){
+        if(sender != reporter && !enoughConfirmations){
             bool alreadyConfirmed = false;
             for (uint256 i; i < confirmations.length; i++) {
                 if (confirmations[i] == sender) {
@@ -119,7 +119,7 @@ contract Report {
     }
 
     function addFixConfirmation(address sender) public{
-        if(sender != fixReporter && fixConfirmations.length < 5 && fixedReport){}
+        if(sender != fixReporter && fixConfirmations.length < 5 && fixedReport){
             bool alreadyConfirmed = false;
             for (uint256 i; i < fixConfirmations.length; i++) {
                 if (fixConfirmations[i] == sender) {
