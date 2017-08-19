@@ -29,6 +29,12 @@ contract Report {
     bytes32 longitude;
     bytes32 latitude;
 
+    bytes32 description1;
+    bytes32 description2;
+    bytes32 description3;
+    bytes32 description4;
+
+
     bool fixedReport;
     address fixReporter;
     bytes32 fixHash1;
@@ -37,7 +43,7 @@ contract Report {
     bool enoughFixConfirmations;
 
 
-    function Report(address sender, bytes32 firstPictureHash, bytes32 secondPictureHash, bytes32 longi, bytes32 lat) {
+    function Report(address sender, bytes32 firstPictureHash, bytes32 secondPictureHash, bytes32 longi, bytes32 lat, bytes32 desc1, bytes32 desc2, bytes32 desc3, bytes32 desc4) {
         id = bytes20(keccak256(longi, lat, firstPictureHash, msg.sig, msg.sender, block.blockhash(block.number - 1)));
         timeStamp = now;
         reporter = sender;
@@ -47,6 +53,10 @@ contract Report {
         longitude = longi;
         latitude = lat;
         fixedReport = false;
+        description1 = desc1;
+        description2 = desc2;
+        description3 = desc3;
+        description4 = desc4;
     }
 
     function addConfirmation(address sender) public{
@@ -100,6 +110,23 @@ contract Report {
     function getLatitude() public constant returns (bytes32) {
         return latitude;
     }
+
+    function getDescription1() public constant returns (bytes32) {
+        return description1;
+    }
+
+    function getDescription2() public constant returns (bytes32) {
+        return description2;
+    }
+
+    function getDescription3() public constant returns (bytes32) {
+        return description3;
+    }
+
+    function getDescription4() public constant returns (bytes32) {
+        return description4;
+    }
+
 
     function reportFix(bytes32 hash1, bytes32 hash2) public {
         if(enoughConfirmations){
@@ -158,9 +185,10 @@ contract Repairchain is Mortal {
 
     }
 
-    function firstStringToBytes32(string memory source) private returns (bytes32 result) {
+    function stringToBytes32(string memory source, uint start) private returns (bytes32 result) {
+        uint startIndex = 32*start;
         assembly {
-            result := mload(add(source, 32))
+            result := mload(add(source, startIndex))
         }
     }
 
@@ -188,12 +216,17 @@ contract Repairchain is Mortal {
     }
 
 
-    function addReportToCity(string city, string pictureHash, string longitude, string latitude) {
-        bytes32 pictureHashAsBytes32first = firstStringToBytes32(pictureHash);
-        bytes32 pictureHashAsBytes32second = secondStringToBytes32(pictureHash);
-        bytes32 longi = firstStringToBytes32(longitude);
-        bytes32 lati = firstStringToBytes32(latitude);
-        Report newReport = new Report(msg.sender, pictureHashAsBytes32first, pictureHashAsBytes32second, longi, lati);
+    function addReportToCity(string city, string pictureHash, string longitude, string latitude, string description) {
+        bytes32 pictureHashAsBytes32first = stringToBytes32(pictureHash,1);
+        bytes32 pictureHashAsBytes32second = stringToBytes32(pictureHash, 2);
+        bytes32 longi = stringToBytes32(longitude, 1);
+        bytes32 lati = stringToBytes32(latitude, 1);
+
+        bytes32 desc1 = stringToBytes32(description, 1);
+        bytes32 desc2 = stringToBytes32(description, 2);
+        bytes32 desc3 = stringToBytes32(description, 3);
+        bytes32 desc4 = stringToBytes32(description, 4);
+        Report newReport = new Report(msg.sender, pictureHashAsBytes32first, pictureHashAsBytes32second, longi, lati, desc1, desc2, desc3, desc4);
         reports[city].push(newReport);
     }
 
@@ -235,23 +268,43 @@ contract Repairchain is Mortal {
     }
 
     function getPictureHash1 (string city, bytes20 id) public constant returns (string) {
-        bytes32 hash1 = getReport(city, id).getPictureHash1();
-        return bytes32ToString(hash1);
+        bytes32 hash = getReport(city, id).getPictureHash1();
+        return bytes32ToString(hash);
     }
 
     function getPictureHash2 (string city, bytes20 id) public constant returns (string) {
-        bytes32 hash2 = getReport(city, id).getPictureHash2();
-        return bytes32ToString(hash2);
+        bytes32 hash = getReport(city, id).getPictureHash2();
+        return bytes32ToString(hash);
+    }
+
+    function getDescription1 (string city, bytes20 id) public constant returns (string) {
+        bytes32 hash = getReport(city, id).getDescription1();
+        return bytes32ToString(hash);
+    }
+
+    function getDescription2 (string city, bytes20 id) public constant returns (string) {
+        bytes32 hash = getReport(city, id).getDescription2();
+        return bytes32ToString(hash);
+    }
+
+    function getDescription3 (string city, bytes20 id) public constant returns (string) {
+        bytes32 hash = getReport(city, id).getDescription3();
+        return bytes32ToString(hash);
+    }
+
+    function getDescription4 (string city, bytes20 id) public constant returns (string) {
+        bytes32 hash = getReport(city, id).getDescription4();
+        return bytes32ToString(hash);
     }
 
     function getFixedPictureHash1 (string city, bytes20 id) public constant returns (string) {
-        bytes32 hash1 = getReport(city, id).getFixedPictureHash1();
-        return bytes32ToString(hash1);
+        bytes32 hash = getReport(city, id).getFixedPictureHash1();
+        return bytes32ToString(hash);
     }
 
     function getFixedPictureHash2 (string city, bytes20 id) public constant returns (string) {
-        bytes32 hash2 = getReport(city, id).getFixedPictureHash2();
-        return bytes32ToString(hash2);
+        bytes32 hash = getReport(city, id).getFixedPictureHash2();
+        return bytes32ToString(hash);
     }
 
     function getReportsLengthOfCity (string city) public constant returns (uint) {
@@ -270,8 +323,8 @@ contract Repairchain is Mortal {
     }
 
     function reportFix (string city, bytes20 id, string pictureHash) public {
-        bytes32 pictureHashAsBytes32first = firstStringToBytes32(pictureHash);
-        bytes32 pictureHashAsBytes32second = secondStringToBytes32(pictureHash);
+        bytes32 pictureHashAsBytes32first = stringToBytes32(pictureHash, 1);
+        bytes32 pictureHashAsBytes32second = stringToBytes32(pictureHash, 2);
         getReport(city, id).reportFix(pictureHashAsBytes32first, pictureHashAsBytes32second);
     }
 
