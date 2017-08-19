@@ -127,6 +127,10 @@ contract Report {
         return description4;
     }
 
+    function getTimestamp() public constant returns (uint) {
+        return timeStamp;
+    }
+
 
     function reportFix(bytes32 hash1, bytes32 hash2) public {
         if(enoughConfirmations){
@@ -296,6 +300,11 @@ contract Repairchain is Mortal {
         bytes32 hash = getReport(city, id).getDescription4();
         return bytes32ToString(hash);
     }
+
+    function getTimestamp(string city, bytes20 id) public constant returns (string) {
+        return getReport(city, id).getTimestamp();
+    }
+
 
     function getFixedPictureHash1 (string city, bytes20 id) public constant returns (string) {
         bytes32 hash = getReport(city, id).getFixedPictureHash1();
