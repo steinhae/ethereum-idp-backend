@@ -301,7 +301,7 @@ contract Repairchain is Mortal {
         return bytes32ToString(hash);
     }
 
-    function getTimestamp(string city, bytes20 id) public constant returns (string) {
+    function getTimestamp(string city, bytes20 id) public constant returns (uint) {
         return getReport(city, id).getTimestamp();
     }
 
