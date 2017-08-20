@@ -184,6 +184,7 @@ contract Report {
 
 contract Repairchain is Mortal {
     mapping (string => Report[]) reports;
+    mapping (string => bytes20[]) ids;
 
     function Repairchain () {
 
@@ -321,14 +322,12 @@ contract Repairchain is Mortal {
     }
 
 
-    function getReportIdsFromCity (string city, uint start) constant returns (bytes20[100]) {
+    function getReportIdsFromCity (string city) constant returns (bytes20[]) {
         Report[] storage cityReports = reports[city];
-        bytes20[100] memory ids;
-        uint end = 100*start +100;
-        for (uint i = start*100; i < cityReports.length && i < end; i++) {
-            ids[i] = cityReports[i].getId();
+        for (uint i = 0; i < cityReports.length; i++) {
+            ids[city].push(cityReports[i].getId());
         }
-        return ids;
+        return ids[city];
     }
 
     function reportFix (string city, bytes20 id, string pictureHash) public {
