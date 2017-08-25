@@ -1,4 +1,5 @@
 pragma solidity ^0.4.11;
+
 contract Mortal {
     /* Define variable owner of the type address*/
     address owner;
@@ -19,6 +20,8 @@ contract Mortal {
 
 contract Report {
 
+    uint constant CONFIRMATION_NUMBER = 5;
+
     bytes20 id;
     uint timeStamp;
     address reporter;
@@ -34,14 +37,13 @@ contract Report {
     bytes32 description3;
     bytes32 description4;
 
-
+    bool incentivePaidToReporter;
     bool fixedReport;
     address fixReporter;
     bytes32 fixHash1;
     bytes32 fixHash2;
     address[] fixConfirmations;
     bool enoughFixConfirmations;
-
 
     function Report(address sender, bytes32 firstPictureHash, bytes32 secondPictureHash, bytes32 longi, bytes32 lat, bytes32 desc1, bytes32 desc2, bytes32 desc3, bytes32 desc4) {
         id = bytes20(keccak256(longi, lat, firstPictureHash, msg.sig, msg.sender, block.blockhash(block.number - 1)));
@@ -50,6 +52,7 @@ contract Report {
         pictureHash1 = firstPictureHash;
         pictureHash2 = secondPictureHash;
         enoughConfirmations = false;
+        incentivePaidToReporter = false;
         longitude = longi;
         latitude = lat;
         fixedReport = false;
@@ -72,11 +75,19 @@ contract Report {
             if (!alreadyConfirmed) {
                 confirmations.push(sender);
                 /* hardcoded limit of confirmations is 5*/
-                if(confirmations.length == 5){
+                if (confirmations.length == CONFIRMATION_NUMBER){
                     enoughConfirmations = true;
                 }
             }
         }
+    }
+
+    function setIncentivePaidToReporter(){
+        incentivePaidToReporter = true;
+    }
+
+    function getIncentivePaidToReporter() public constant returns (bool) {
+        return incentivePaidToReporter;
     }
 
     function getEnoughConfirmations() public constant returns (bool){
@@ -150,7 +161,7 @@ contract Report {
     }
 
     function addFixConfirmation(address sender) public{
-        if(sender != fixReporter && fixConfirmations.length < 5 && fixedReport){
+        if(sender != fixReporter && fixConfirmations.length < CONFIRMATION_NUMBER && fixedReport){
             bool alreadyConfirmed = false;
             for (uint256 i; i < fixConfirmations.length; i++) {
                 if (fixConfirmations[i] == sender) {
@@ -161,7 +172,7 @@ contract Report {
             if (!alreadyConfirmed) {
                 fixConfirmations.push(sender);
                 /* hardcoded limit of confirmations is 5*/
-                if(fixConfirmations.length == 5){
+                if(fixConfirmations.length == CONFIRMATION_NUMBER){
                     enoughFixConfirmations = true;
                 }
             }
@@ -183,17 +194,29 @@ contract Report {
 
 
 contract Repairchain is Mortal {
+
     mapping (string => Report[]) reports;
     mapping (string => bytes20[]) ids;
     string[] cities;
-
+    mapping (string => uint) private balances;
 
     function Repairchain () {
 
     }
 
-    function addCity (string city) public {
+    function addFundsToCity(string city) payable public {
+        if (cityExist(city)) {
+            balances[city] += msg.value;
+        }
+    }
+
+    function addCity (string city) payable public {
         cities.push(city);
+        balances[city] += msg.value;
+    }
+
+    function getCityBalance(string city) constant returns (uint) {
+        return balances[city];
     }
 
     function stringToBytes32(string memory source, uint start) private returns (bytes32 result) {
@@ -259,7 +282,6 @@ contract Repairchain is Mortal {
         }
         return cityExists;
     }
-
 
     function addReportToCity(string city, string pictureHash, string longitude, string latitude, string description) {
         bool cityExists = cityExist(city);
@@ -388,7 +410,14 @@ contract Repairchain is Mortal {
     }
 
     function addFixConfirmationToReport(string city, bytes20 id) public {
-        getReport(city, id).addFixConfirmation(msg.sender);
+        Report report = getReport(city, id);
+        report.addFixConfirmation(msg.sender);
+        // pay incentive to reporter
+        if (report.getEnoughFixConfirmations() && !report.getIncentivePaidToReporter() && balances[city] > 5 finney) {
+            report.setIncentivePaidToReporter();
+            balances[city] -= 5 finney;
+            report.getReporter().transfer(5 finney);
+        }
     }
 
     function getFixedReport(string city, bytes20 id) public constant returns (bool) {
