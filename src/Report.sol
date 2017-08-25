@@ -1,4 +1,5 @@
 pragma solidity ^0.4.11;
+
 contract Mortal {
     /* Define variable owner of the type address*/
     address owner;
@@ -19,6 +20,8 @@ contract Mortal {
 
 contract Report {
 
+    uint constant CONFIRMATION_NUMBER = 5;
+
     bytes20 id;
     uint timeStamp;
     address reporter;
@@ -34,14 +37,13 @@ contract Report {
     bytes32 description3;
     bytes32 description4;
 
-
+    bool incentivePaidToReporter;
     bool fixedReport;
     address fixReporter;
     bytes32 fixHash1;
     bytes32 fixHash2;
     address[] fixConfirmations;
     bool enoughFixConfirmations;
-
 
     function Report(address sender, bytes32 firstPictureHash, bytes32 secondPictureHash, bytes32 longi, bytes32 lat, bytes32 desc1, bytes32 desc2, bytes32 desc3, bytes32 desc4) {
         id = bytes20(keccak256(longi, lat, firstPictureHash, msg.sig, msg.sender, block.blockhash(block.number - 1)));
@@ -50,6 +52,7 @@ contract Report {
         pictureHash1 = firstPictureHash;
         pictureHash2 = secondPictureHash;
         enoughConfirmations = false;
+        incentivePaidToReporter = false;
         longitude = longi;
         latitude = lat;
         fixedReport = false;
@@ -72,11 +75,19 @@ contract Report {
             if (!alreadyConfirmed) {
                 confirmations.push(sender);
                 /* hardcoded limit of confirmations is 5*/
-                if(confirmations.length == 5){
+                if (confirmations.length == CONFIRMATION_NUMBER){
                     enoughConfirmations = true;
                 }
             }
         }
+    }
+
+    function setIncentivePaidToReporter(){
+        incentivePaidToReporter = true;
+    }
+
+    function getIncentivePaidToReporter() public constant returns (bool) {
+        return incentivePaidToReporter;
     }
 
     function getEnoughConfirmations() public constant returns (bool){
@@ -150,7 +161,7 @@ contract Report {
     }
 
     function addFixConfirmation(address sender) public{
-        if(sender != fixReporter && fixConfirmations.length < 5 && fixedReport){
+        if(sender != fixReporter && fixConfirmations.length < CONFIRMATION_NUMBER && fixedReport){
             bool alreadyConfirmed = false;
             for (uint256 i; i < fixConfirmations.length; i++) {
                 if (fixConfirmations[i] == sender) {
@@ -161,7 +172,7 @@ contract Report {
             if (!alreadyConfirmed) {
                 fixConfirmations.push(sender);
                 /* hardcoded limit of confirmations is 5*/
-                if(fixConfirmations.length == 5){
+                if(fixConfirmations.length == CONFIRMATION_NUMBER){
                     enoughFixConfirmations = true;
                 }
             }
@@ -183,11 +194,29 @@ contract Report {
 
 
 contract Repairchain is Mortal {
+
     mapping (string => Report[]) reports;
     mapping (string => bytes20[]) ids;
+    string[] cities;
+    mapping (string => uint) private balances;
 
     function Repairchain () {
 
+    }
+
+    function addFundsToCity(string city) payable public {
+        if (cityExist(city)) {
+            balances[city] += msg.value;
+        }
+    }
+
+    function addCity (string city) payable public {
+        cities.push(city);
+        balances[city] += msg.value;
+    }
+
+    function getCityBalance(string city) constant returns (uint) {
+        return balances[city];
     }
 
     function stringToBytes32(string memory source, uint start) private returns (bytes32 result) {
@@ -220,26 +249,62 @@ contract Repairchain is Mortal {
         return string(bytesStringTrimmed);
     }
 
+    function compare(string _a, string _b) private returns (int) {
+        bytes memory a = bytes(_a);
+        bytes memory b = bytes(_b);
+        uint minLength = a.length;
+        if (b.length < minLength) minLength = b.length;
+        //@todo unroll the loop into increments of 32 and do full 32 byte comparisons
+        for (uint i = 0; i < minLength; i ++)
+            if (a[i] < b[i])
+                return -1;
+            else if (a[i] > b[i])
+                return 1;
+            if (a.length < b.length)
+                return -1;
+            else if (a.length > b.length)
+                return 1;
+            else
+                return 0;
+    }
+
+    function equal(string _a, string _b) private returns (bool) {
+        return compare(_a, _b) == 0;
+    }
+
+    function cityExist(string city) private returns (bool){
+        bool cityExists = false;
+        for (uint256 i; i < cities.length; i++) {
+            if (equal(cities[i], city)) {
+                cityExists = true;
+                break;
+            }
+        }
+        return cityExists;
+    }
 
     function addReportToCity(string city, string pictureHash, string longitude, string latitude, string description) {
-        bytes32 pictureHashAsBytes32first = stringToBytes32(pictureHash,1);
-        bytes32 pictureHashAsBytes32second = stringToBytes32(pictureHash, 2);
-        bytes32 longi = stringToBytes32(longitude, 1);
-        bytes32 lati = stringToBytes32(latitude, 1);
+        bool cityExists = cityExist(city);
+        if(cityExists){
+            bytes32 pictureHashAsBytes32first = stringToBytes32(pictureHash,1);
+            bytes32 pictureHashAsBytes32second = stringToBytes32(pictureHash, 2);
+            bytes32 longi = stringToBytes32(longitude, 1);
+            bytes32 lati = stringToBytes32(latitude, 1);
 
-        bytes32 desc1 = stringToBytes32(description, 1);
-        bytes32 desc2 = stringToBytes32(description, 2);
-        bytes32 desc3 = stringToBytes32(description, 3);
-        bytes32 desc4 = stringToBytes32(description, 4);
-        Report newReport = new Report(msg.sender, pictureHashAsBytes32first, pictureHashAsBytes32second, longi, lati, desc1, desc2, desc3, desc4);
-        reports[city].push(newReport);
+            bytes32 desc1 = stringToBytes32(description, 1);
+            bytes32 desc2 = stringToBytes32(description, 2);
+            bytes32 desc3 = stringToBytes32(description, 3);
+            bytes32 desc4 = stringToBytes32(description, 4);
+            Report newReport = new Report(msg.sender, pictureHashAsBytes32first, pictureHashAsBytes32second, longi, lati, desc1, desc2, desc3, desc4);
+            reports[city].push(newReport);
+        }
     }
 
     function getReporter(string city, bytes20 id) constant returns (address) {
         return getReport(city, id).getReporter();
     }
 
-    function getReport(string city, bytes20 id) public constant returns (Report) {
+    function getReport(string city, bytes20 id) private constant returns (Report) {
         //iterate over Reports list and return Report with id == id
         Report[] storage cityReports = reports[city];
         for (uint i = 0; i < cityReports.length; i++) {
@@ -345,7 +410,14 @@ contract Repairchain is Mortal {
     }
 
     function addFixConfirmationToReport(string city, bytes20 id) public {
-        getReport(city, id).addFixConfirmation(msg.sender);
+        Report report = getReport(city, id);
+        report.addFixConfirmation(msg.sender);
+        // pay incentive to reporter
+        if (report.getEnoughFixConfirmations() && !report.getIncentivePaidToReporter() && balances[city] > 5 finney) {
+            report.setIncentivePaidToReporter();
+            balances[city] -= 5 finney;
+            report.getReporter().transfer(5 finney);
+        }
     }
 
     function getFixedReport(string city, bytes20 id) public constant returns (bool) {
