@@ -70,8 +70,8 @@ contract Report {
     }
 
     /* adds confirmation to this report object.
-     * checks if sender already confirmed or if sender is the reporter
-     * if report has CONFIRMATION_NUMBER many confirmations after confirming
+     * sender can not be reporter or already in confirmations[] 
+     * if report has CONFIRMATION_NUMBER many confirmations 
      * already confirmed flag will be set*/
 
     function addConfirmation(address sender) public{
@@ -111,9 +111,8 @@ contract Report {
             }
         }
     }
-
 	
-    /*contractors can set a report to fixed with the picture of the fixed object if it has enough confirmations*/
+    /*contractors can set a report fixed with the picture of the fixed object if it has enough confirmations*/
     function reportFix(bytes32 hash1, bytes32 hash2) public {
         if(enoughConfirmations){
             fixedReport = true;
@@ -122,8 +121,6 @@ contract Report {
             fixReporter = msg.sender;
         }
     }
-
-
 
     function setIncentivePaidToReporter(){
         incentivePaidToReporter = true;
@@ -253,20 +250,17 @@ contract Repairchain is Mortal {
         return cityExists;
     }
 	
+	/*ads a city to the contract with the corresponding balance the sender sent*/
 	function addCity (string city) payable public {
         cities.push(city);
         balances[city] += msg.value;
     }
 
-    /* if city exists in the system it can add fonds this way*/
+    /* for adding fonds after inizially adding city*/
     function addFundsToCity(string city) payable public {
         if (cityExist(city)) {
             balances[city] += msg.value;
         }
-    }
-
-    function getCityBalance(string city) constant returns (uint) {
-        return balances[city];
     }
 
     /*wrapper for addConfirmation function of Report identified by city and id*/
@@ -293,8 +287,6 @@ contract Repairchain is Mortal {
         getReport(city, id).reportFix(pictureHashAsBytes32first, pictureHashAsBytes32second);
     }
 
-	
-
     /*returns report identified with city and id*/
     function getReport(string city, bytes20 id) private constant returns (Report) {
         //iterate over Reports list and return Report with id == id
@@ -304,6 +296,19 @@ contract Repairchain is Mortal {
                 return cityReports[i];
             }
         }
+    }
+	
+	/* saves and returns all ids to the given city */
+	function getReportIdsFromCity (string city) constant returns (bytes20[]) {
+        Report[] storage cityReports = reports[city];
+        for (uint i = 0; i < cityReports.length; i++) {
+            ids[city].push(cityReports[i].getId());
+        }
+        return ids[city];
+    }
+	
+	function getCityBalance(string city) constant returns (uint) {
+        return balances[city];
     }
 
     /*simple getter wrapper functions*/
@@ -378,14 +383,6 @@ contract Repairchain is Mortal {
         return reports[city].length;
     }
 
-    function getReportIdsFromCity (string city) constant returns (bytes20[]) {
-        Report[] storage cityReports = reports[city];
-        for (uint i = 0; i < cityReports.length; i++) {
-            ids[city].push(cityReports[i].getId());
-        }
-        return ids[city];
-    }
-
     function getFixConfirmationCount (string city, bytes20 id) public constant returns (uint256) {
         return getReport(city, id).getFixConfirmationCount();
     }
@@ -408,7 +405,6 @@ contract Repairchain is Mortal {
         }
     }
 
-
     function bytes32ToString(bytes32 x) private constant returns (string) {
         bytes memory bytesString = new bytes(32);
         uint charCount = 0;
@@ -425,8 +421,6 @@ contract Repairchain is Mortal {
         }
         return string(bytesStringTrimmed);
     }
-
-    
 
     function compare(string _a, string _b) private returns (int) {
         bytes memory a = bytes(_a);
@@ -450,7 +444,6 @@ contract Repairchain is Mortal {
     function equal(string _a, string _b) private returns (bool) {
         return compare(_a, _b) == 0;
     }
-
 }
 
 
