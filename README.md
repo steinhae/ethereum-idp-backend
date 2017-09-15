@@ -23,11 +23,13 @@ A project documentation can be found here INSERT LINK TO PDF.
 
 </details>
 
-## Deplyoing the Contract
+
+## Deploying the Contract
 
 The solidity code that can be deployed on the Ethereum Blockchain is in the Report.sol file in the src folder. There exist multipe ways to deploy the code. One of the easiest ways is to use the [Ethereum Wallet](https://github.com/ethereum/mist/releases) developed by the Ethereum project.
-
 This application synchronices the blockchain and the contract can be deployed and tested. 
+
+To get the Android application that interacts with this contract, check out the [project page](https://github.com/steinhae/ethereum-idp-frontend).
 
 ## Authors
 
