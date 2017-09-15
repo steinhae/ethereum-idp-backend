@@ -1,7 +1,7 @@
 # Repairchain Backend
 The idea for Repairchain was developed during a workshop organized by the [Blockchain Research Group at Technical University of Munich (TUM)](https://www.blockchain.tum.de "Blockchain Research Group at TUM"). Contact person and project supervisors are [Dr. Andranik Tumasjan](mailto:andranik.tumasjan@tum.de) and [Marcus Müller](mailto:marcus.mueller@tum.de). The project was realized in context of the interdisciplinary project in coorperation with the Department of Informatics And Mathematics by [Anton Widera, Hannes Steinhäuser and Joseph Palckal.](#authors).
 
-The scope of this project was to develop a proof of concept DApp consisting of a frontend in form of an Android app and a backend consisting of smart contracts deployed to the Ethereum Blockchain. This repositiory contains the Android app.
+The scope of this project was to develop a proof of concept DApp consisting of a frontend in form of an Android app and a backend consisting of smart contracts deployed to the Ethereum Blockchain. This repositiory contains the Ethereum contract.
 <details>
   <summary>Click to expand detailed description</summary>
 
@@ -26,8 +26,8 @@ A project documentation can be found here INSERT LINK TO PDF.
 
 ## Deploying the Contract
 
-The solidity code that can be deployed on the Ethereum Blockchain is in the Report.sol file in the src folder. There exist multipe ways to deploy the code. One of the easiest ways is to use the [Ethereum Wallet](https://github.com/ethereum/mist/releases) developed by the Ethereum project.
-This application synchronices the blockchain and the contract can be deployed and tested. 
+The Solidity code that can be deployed on the Ethereum Blockchain is in the Report.sol file in the src folder. There exist multipe ways to deploy the code. One of the easiest ways is to use the [Ethereum Wallet](https://github.com/ethereum/mist/releases) developed by the Ethereum project.
+This application synchronizes the blockchain and the contract can be deployed and tested on the testnet as well as the mainnet. A detailed explanation on how to use Ethereum Wallet can be found [here](https://steemit.com/ethereum/@jscottdavis28/getting-started-with-ethereum-wallet-to-deploy-smart-contracts).
 
 To get the Android application that interacts with this contract, check out the [project page](https://github.com/steinhae/ethereum-idp-frontend).
 
@@ -37,7 +37,7 @@ To get the Android application that interacts with this contract, check out the 
 * **Hannes Steinhäuser** - *Master Student, Computer Science  @TUM* - [steinhae](https://github.com/steinhae)
 * **Joseph Palackal** - *Master Student, Computer Science  @TUM* - [palackjo](https://github.com/palackjo)
 
-See also the list of [contributors](https://github.com/steinhae/ethereum-idp-frontend/contributors) who participated in this project.
+See also the list of [contributors](https://github.com/steinhae/ethereum-idp-backend/contributors) who participated in this project.
 
 ## Supervisors
 
